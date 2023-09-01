@@ -29,9 +29,9 @@ Blockchain.prototype.getLastBlock = function () {
   return this.chain.at(-1);
 };
 
-Blockchain.prototype.addTransaction = function (amount, sender, recipient) {
+Blockchain.prototype.addTransaction = function (message, sender, recipient) {
   const transaction = {
-    amount,
+    message,
     sender,
     recipient,
     transactionId: uuidv4().split("-").join(""),

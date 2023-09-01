@@ -10,12 +10,6 @@ module.exports = (donorChain) => {
     res.status(200).json({ success: true, data: donorChain });
   });
 
-  router.post("/transaction", (req, res) => {
-    const transaction = req.body;
-    const index = donorChain.addTransactionToPendingList(transaction);
-    res.status(201).json({ success: true, data: index });
-  });
-
   router.get("/consensus", async (req, res) => {
     let longestChain = null;
     let currentChainLength = donorChain.chain.length;
@@ -44,7 +38,7 @@ module.exports = (donorChain) => {
 
   router.post("/transaction/broadcast", async (req, res) => {
     const transaction = donorChain.addTransaction(
-      req.body.amount,
+      req.body.message,
       req.body.sender,
       req.body.recipient
     );
@@ -76,7 +70,7 @@ module.exports = (donorChain) => {
       await Promise.all(networkPromises);
 
       await axios.post(`${donorChain.nodeUrl}/api/transaction/broadcast`, {
-        amount: 6.25,
+        message: "gg you mined a block",
         sender: "00",
         recipient: nodeAddress,
       });
@@ -90,24 +84,6 @@ module.exports = (donorChain) => {
     }
   });
 
-  router.post("/block", (req, res) => {
-    const block = req.body.block;
-    const lastBlock = donorChain.getLastBlock();
-    const hashIsCorrect = lastBlock.hash === block.previousHash;
-    const hasCorrectIndex = lastBlock.index + 1 === block.index;
-    if (hashIsCorrect && hasCorrectIndex) {
-      donorChain.chain.push(block);
-      donorChain.pendingList = [];
-      res.status(201).json({
-        success: true,
-        errorMessage: "Block is not approved",
-        data: block,
-      });
-    } else {
-      res.status(400).json({ success: false, data: "Block is not approved" });
-    }
-  });
-
   router.post("/donation", (req, res) => {
     const transaction = req.body;
     const { index, transactionId } =
@@ -118,6 +94,17 @@ module.exports = (donorChain) => {
   router.get("/validate", (req, res) => {
     const isValid = donorChain.validateChain(donorChain.chain);
     res.status(200).json({ success: true, isValid });
+  });
+
+  router.post("/register-node", (req, res) => {
+    const newNodeUrl = req.body.newNodeUrl;
+
+    if (!donorChain.networkNodes.includes(newNodeUrl)) {
+      donorChain.networkNodes.push(newNodeUrl);
+      res.status(201).json({ note: "New node registered successfully." });
+    } else {
+      res.status(400).json({ note: "Node already registered." });
+    }
   });
 
   router.get("/donation/:transactionID", (req, res) => {
